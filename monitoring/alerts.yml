@@ -1,0 +1,39 @@
+groups:
+  - name: movie_bot_alerts
+    rules:
+
+      - alert: BotDown
+        expr: bot_up == 0 OR absent(bot_up)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Бот недоступний"
+          description: "Telegram бот не відповідає. Перевір сервер!"
+
+      - alert: GeminiHighErrorRate
+        expr: increase(bot_gemini_errors_total[5m]) > 5
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Багато помилок Gemini API"
+          description: "За останні 5 хвилин було {{ $value }} помилок Gemini API."
+
+      - alert: GeminiSlowResponse
+        expr: histogram_quantile(0.5, rate(bot_gemini_response_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Gemini API відповідає повільно"
+          description: "Медіанний час відповіді Gemini: {{ $value }} секунд."
+
+      - alert: HighRateLimitHits
+        expr: increase(bot_rate_limit_hits_total[10m]) > 10
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "Часті спрацювання rate limit"
+          description: "{{ $value }} разів за 10 хвилин користувачі впиралися в ліміт."
